@@ -1,1 +1,24 @@
+name: Dependency updates CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**/package.json'
+      - '**/package-lock.json'
+      - '**/npm-shrinkwrap.json'
+
+jobs:
+  test-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - run: npm ci
+      - run: |
+          if npm run | grep -q "lint"; then npm run lint; else echo "No lint"; fi
+      - run: |
+          if npm run | grep -q "test"; then npm test || exit 1; else echo "No tests"; fi
  

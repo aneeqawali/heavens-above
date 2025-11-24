@@ -1,1 +1,41 @@
+name: Scheduled scraper run
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # every day at 02:00 UTC (adjust as needed)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run scraper (generate/refresh public data)
+        run: node run.js
+
+      - name: Commit generated data back (optional)
+        if: ${{ secrets.REPO_PAT != '' }}
+        env:
+          REPO_PAT: ${{ secrets.REPO_PAT }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "actions@github.com"
+          git add -A public/data || true
+          git commit -m "chore: update scraped data [ci skip]" || echo "no changes to commit"
+          git push https://x-access-token:${REPO_PAT}@github.com/${{ github.repository }} HEAD:main
  

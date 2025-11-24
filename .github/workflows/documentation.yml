@@ -1,1 +1,39 @@
+name: Deploy documentation
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch: {}
+
+jobs:
+  build-and-deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install
+        run: npm ci
+
+      - name: Build docs (jsdoc / markdown)
+        run: |
+          # If you use a docs generator, run it here, e.g.:
+          # npm run docs
+          if npm run | grep -q "docs"; then
+            npm run docs
+          else
+            echo "No docs build script. Ensure docs/ contains the static docs to publish."
+          fi
+
+      - name: Deploy docs to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs  # or ./public if docs generate to public/
  
